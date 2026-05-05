@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru"> <!-- Указываем язык страницы – русский -->
+<head>
+    <meta charset="UTF-8">  <!-- Устанавливаем кодировку UTF-8 для корректного отображения символов -->
+    <title>Безопасность: защита от бот-сети</title> <!-- Заголовок вкладки браузера -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Подключаем библиотеку Chart.js для построения графиков -->
+    <style> 
+        /* Общие стили страницы */
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; } /* Основной шрифт, отступы, фон */
+        h1 { text-align: center; color: #2c3e50; } /* Заголовок по центру, тёмно-синий цвет */
+        .container { max-width: 1400px; margin: 0 auto; } /* Контейнер с ограничением ширины и центрированием */
+
+        /* Стили для карточек с формами */
+        .row { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; } /* Гибкий ряд с отступами */
+        .card { background: white; border-radius: 8px; padding: 20px; flex: 1; min-width: 250px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); } /* Карточка с тенью */
+        .card h3 { margin-top: 0; } /* Убираем верхний отступ у подзаголовка карточки */
+
+        /* Поля ввода и кнопки */
+        input, textarea, button { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; } /* Единый стиль для элементов форм */
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; } /* Зелёная кнопка */
+        button:hover { background-color: #45a049; } /* Затемнение кнопки при наведении */
+
+        /* Стили для карточек с графиками */
+        .chart-row { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; } /* Гибкий ряд для графиков */
+        .chart-card { background: white; border-radius: 8px; padding: 20px; flex: 1; min-width: 300px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); } /* Карточка с тенью */
+
+        /* Стили для таблицы результатов */
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); } /* Полноширинная таблица с тенью */
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; } /* Границы и отступы ячеек */
+        th { background-color: #4CAF50; color: white; } /* Зелёный фон заголовков, белый текст */
+
+        /* Цветовые классы для решений */
+        .blocked { background-color: #ffebee; color: #c62828; font-weight: bold; } /* Красный фон для BLOCK */
+        .allowed { background-color: #e8f5e9; color: #2e7d32; font-weight: bold; } /* Зелёный фон для ALLOW */
+
+        /* Блок пояснений */
+        .note { margin-top: 20px; background-color: #e3f2fd; padding: 15px; border-radius: 5px; font-size: 14px; } /* Голубой фон для примечаний */
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #888; } /* Нижний колонтитул */
+
+        /* Стили для цветных уведомлений */
+        .message { padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .message-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; } /* Зелёное уведомление (успех) */
+        .message-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; } /* Красное уведомление (ошибка/блокировка) */
+        .message-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; } /* Синее уведомление (информация) */
+        .message-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; } /* Жёлтое уведомление (предупреждение) */
+
+        /* Ссылки внизу страницы */
+        .link-about { text-align: center; margin: 20px 0; } /* Центрирование ссылок */
+        .link-about a { color: #4CAF50; font-size: 16px; text-decoration: none; } /* Зелёные ссылки */
+        .link-about a:hover { text-decoration: underline; } /* Подчёркивание при наведении */
+    </style>
+</head>
+<body> <!-- Основной контейнер страницы -->
+<div class="container">
+    <h1>Контейнер защиты от скрытного включения в бот-сеть</h1> <!--Заголовок страницы -->
+    <div style="text-align:center; color:#555;">Анализ сетевой активности (вариант 12) — добавление IP со случайными параметрами</div> <!--Подзаголовок с описанием функционала -->
+
+    <!-- Блок для отображения уведомлений (сообщения об успехе, ошибках и т.д.) -->
+    {% if message %}
+        <div class="message message-{{ message.type }}"> 
+            {{ message.text }} <!-- Выводим текст сообщения -->
+        </div>
+    {% endif %} 
+
+    <!-- Три карточки с формами для взаимодействия с пользователем -->
+    <div class="row">
+        <div class="card"> <!-- Карточка для добавления одного IP -->
+            <h3>Добавить один IP</h3> <!-- Заголовок карточки -->
+            <form method="post">
+                {% csrf_token %} <!-- Защита от CSRF-атак -->
+                <input type="text" name="ip" placeholder="IP-адрес, например 8.8.8.8" required> <!-- Поле для ввода IP -->
+                <button type="submit">Добавить</button> <!-- Кнопка отправки формы -->
+            </form>
+        </div>
+        <div class="card">
+            <h3>Массовое добавление</h3> <!-- Заголовок для массового добавления IP -->
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="bulk_ips" rows="3" placeholder="IP через запятую или с новой строки"></textarea> <!-- Текстовая область для ввода нескольких IP -->
+                <button type="submit">Добавить все</button> <!-- Кнопка для массового добавления -->
+            </form>
+        </div>
+        <div class="card"> <!-- Карточка для очистки таблицы -->
+            <h3>Очистить таблицу</h3> <!-- Заголовок карточки -->
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="clear" value="1">Сбросить до начального состояния</button> <!-- Кнопка очистки таблицы -->
+            </form>
+            <small>Удалит все добавленные IP, оставит только 10 исходных.</small> <!-- Пояснение к кнопке -->
+        </div>
+    </div>
+
+    <!-- Три карточки с графиками -->
+    <div class="chart-row">
+        <div class="chart-card">
+            <h3>Распределение решений</h3>
+            <canvas id="pieChart" width="300" height="300"></canvas> <!-- Контейнер для круговой диаграммы -->
+        </div>
+        <div class="chart-card">
+            <h3>Уровень угрозы по IP (первые 10 IP)</h3>
+            <canvas id="barChart" width="400" height="300"></canvas> <!-- Контейнер для столбчатой диаграммы -->
+        </div>
+        <div class="chart-card">
+            <h3>Суммарные срабатывания факторов риска</h3>
+            <canvas id="factorsChart" width="400" height="300"></canvas> <!-- Контейнер для гистограммы факторов -->
+        </div>
+    </div>
+
+    <!-- Таблица для отображения результатов анализа -->
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th><th>IP адрес</th><th>Соединений</th><th>Подозр. порт</th> <!-- Заголовки столбцов таблицы -->
+                    <th>Подозр. процесс</th><th>Высокий трафик</th><th>C&C сервер</th> <!-- Продолжение заголовков -->
+                    <th>Ночная активность</th><th>Уровень угрозы</th><th>Решение</th> <!-- Остальные заголовки -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Цикл по данным: каждая строка таблицы формируется из одного элемента data -->
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.id }}</td> <!-- Отображение ID записи -->
+                    <td>{{ row.ip }}</td> <!-- Отображение IP-адреса -->
+                    <td>{{ row.connections }}</td> <!-- Отображение количества соединений -->
+                    <td>{{ row.suspicious_port }}</td> <!-- Отображение признака подозрительного порта -->
+                    <td>{{ row.unknown_process }}</td> <!-- Отображение признака подозрительного процесса -->
+                    <td>{{ row.high_traffic }}</td> <!-- Отображение признака высокого трафика -->
+                    <td>{{ row.c2_server }}</td> <!-- Отображение признака C&C сервера -->
+                    <td>{{ row.night_activity }}</td> <!-- Отображение признака ночной активности -->
+                    <td>{{ row.threat_level }}</td> <!-- Отображение уровня угрозы -->
+                    <!-- Класс меняется в зависимости от решения (BLOCK или ALLOW) -->
+                    <td class="{% if row.decision == 'BLOCK' %}blocked{% else %}allowed{% endif %}">{{ row.decision }}</td> <!-- Отображение решения с соответствующим стилем -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Ссылки на дополнительные страницы -->
+    <div class="link-about">
+        <a href="{% url 'analytics' %}">Аналитика и экспорт</a> |<!-- Ссылка на страницу аналитики -->
+        <a href="{% url 'about' %}">О проекте</a> <!-- Ссылка на страницу "О проекте" -->
+    </div>
+
+    <!-- Пояснительный блок с информацией о работе программы -->
+    <div class="note">
+        <strong>Пояснение:</strong> BLOCK — соединение заблокировано (уровень угрозы ≥ 3). ALLOW — соединение разрешено (уровень угрозы < 3).<br> <!-- Объяснение решений -->
+        <strong>C&C сервер:</strong> 1 — IP является командным центром бот-сети (вероятность 33% для добавляемых IP), 0 — нет.<br>
+        Количество соединений и другие параметры для вручную добавленных IP генерируются случайно (1–250, 0/1).<br>
+        Кнопка «Сбросить до начального состояния» удаляет все добавленные IP и возвращает таблицу к исходным 10. <!-- Пояснение к кнопке очистки -->
+    </div>
+
+    <!-- Нижний колонтитул -->
+    <div class="footer">
+        Лабораторная работа №4 — Веб-интерфейс контейнера безопасности<br>
+        Вариант 12 | Защита от скрытного включения в бот-сеть
+    </div>
+</div>
+
+<script>
+    // Передаём данные из Django (шаблонный тег safe гарантирует корректный JSON)
+    const data = {{ data|safe }}; /*Получаем данные из контекста Django */
+
+    // 1. Круговая диаграмма "Распределение решений"
+    const blockCount = data.filter(row => row.decision === 'BLOCK').length; /*Считаем количество BLOCK решений */
+    const allowCount = data.filter(row => row.decision === 'ALLOW').length; /*Считаем количество ALLOW решений */
+    new Chart(document.getElementById('pieChart').getContext('2d'), {
+        type: 'pie', /*Тип диаграммы - круговая */
+        data: { 
+            labels: ['BLOCK', 'ALLOW'], /* Метки для сегментов */
+            datasets: [{ data: [blockCount, allowCount], backgroundColor: ['#ff6666', '#66b3ff'] }] /* Данные и цвета */
+        }
+    });
+
+    // 2. Столбчатая диаграмма "Уровень угрозы по IP" (только первые 10 IP)
+    const first10 = data.slice(0, 10);
+    new Chart(document.getElementById('barChart').getContext('2d'), { /*Создаём новую диаграмму */
+        type: 'bar', /*Тип диаграммы - столбчатая */
+        data: {
+            labels: first10.map(row => row.ip), /* Метки - IP-адреса */
+            datasets: [{ 
+                label: 'Уровень угрозы (баллы)', /* Подпись набора данных */
+                data: first10.map(row => row.threat_level), /* Данные - уровни угрозы */
+                backgroundColor: 'orange', /* Цвет столбцов */
+                borderColor: 'black', /* Цвет границ столбцов */
+                borderWidth: 1 /* Ширина границ */
+            }]
+        },
+        options: {
+            scales: { 
+                y: { beginAtZero: true, max: 10, title: { display: true, text: 'Баллы' } }, /* Настройки оси Y */
+                x: { ticks: { rotation: 45, autoSkip: true } } /* Настройки оси X */
+            }
+        }
+    });
+
+    // 3. Гистограмма "Суммарные срабатывания факторов риска"
+    const factors = {
+        'Подозр. порт': data.reduce((s, r) => s + r.suspicious_port, 0),/* Суммируем срабатывания каждого фактора */
+        'Подозр. процесс': data.reduce((s, r) => s + r.unknown_process, 0),/* Суммируем срабатывания каждого фактора */
+        'Высокий трафик': data.reduce((s, r) => s + r.high_traffic, 0),/* Суммируем срабатывания каждого фактора */
+        'C&C сервер': data.reduce((s, r) => s + r.c2_server, 0),/* Суммируем срабатывания каждого фактора */
+        'Ночная активность': data.reduce((s, r) => s + r.night_activity, 0)/* Суммируем срабатывания каждого фактора */
+    };
+    new Chart(document.getElementById('factorsChart').getContext('2d'), {/*Создаём новую диаграмму */
+        type: 'bar',/*Тип диаграммы - столбчатая */
+        data: { 
+            labels: Object.keys(factors), /* Метки - названия факторов */
+            datasets: [{ 
+                label: 'Количество срабатываний', /* Подпись набора данных */
+                data: Object.values(factors), /* Данные - количества срабатываний */
+                backgroundColor: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'] /* Цвета столбцов */
+            }] 
+        },
+        options: { 
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'Количество случаев' } } } /* Настройки оси Y */
+        }
+    });
+</script>
+</body>
+</html>

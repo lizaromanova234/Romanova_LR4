@@ -9,63 +9,70 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+# БЛОК 1: ИМПОРТ БИБЛИОТЕК
+import os                        # Работа с переменными окружения
+from pathlib import Path         # Кроссплатформенная работа с путями
 
-import os
-from pathlib import Path
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# БЛОК 2: БАЗОВЫЕ НАСТРОЙКИ ПУТЕЙ
+# BASE_DIR — корневая папка проекта (где лежит manage.py)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# БЛОК 3: НАСТРОЙКИ БЕЗОПАСНОСТИ
+# Секретный ключ (должен быть скрыт в production)
 SECRET_KEY = "django-insecure-4ju2n@$f9d0c=h)_g0lbb%k9&@rf(xa$d$g$&5ri$uf)*gev^4"
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Режим отладки (True — для разработки, False — для production)
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ["REPLIT_DOMAINS"].split(",")
-CSRF_TRUSTED_ORIGINS = [
-    "https://" + domain for domain in os.environ["REPLIT_DOMAINS"].split(",")
-]
+# БЛОК 4: НАСТРОЙКИ ХОСТОВ (ДЛЯ HTTPS И Replit/Docker)
+# Безопасное получение переменных окружения
+replit_domains = os.environ.get("REPLIT_DOMAINS", "")
+if replit_domains:
+    # Если проект запущен в Replit — берём домены из окружения
+    ALLOWED_HOSTS = replit_domains.split(",")
+    CSRF_TRUSTED_ORIGINS = ["https://" + domain for domain in replit_domains.split(",")]
+else:
+    # Если запуск в Docker или локально
+    ALLOWED_HOSTS = ["*"]                                      # Разрешаем все хосты
+    CSRF_TRUSTED_ORIGINS = ["http://localhost:3000"]           # Для Docker-контейнера
 
-# Application definition
-
+# БЛОК 5: УСТАНОВЛЕННЫЕ ПРИЛОЖЕНИЯ
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "tasks.apps.TasksConfig",
-    "botchecker",
+    "django.contrib.admin",        # Административная панель
+    "django.contrib.auth",         # Аутентификация пользователей
+    "django.contrib.contenttypes", # Работа с типами контента
+    "django.contrib.sessions",     # Управление сессиями
+    "django.contrib.messages",     # Система сообщений
+    "django.contrib.staticfiles",  # Управление статическими файлами
+    "tasks.apps.TasksConfig",      # Приложение tasks (шаблон)
+    "botchecker",                  # Основное приложение контейнера безопасности
 ]
 
+# БЛОК 6: ПРОМЕЖУТОЧНЫЕ СЛОИ (MIDDLEWARE)
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.security.SecurityMiddleware",       # Настройки безопасности
+    "django.contrib.sessions.middleware.SessionMiddleware", # Поддержка сессий
+    "django.middleware.common.CommonMiddleware",            # Общие обработчики
+    "django.middleware.csrf.CsrfViewMiddleware",            # Защита от CSRF-атак
+    "django.contrib.auth.middleware.AuthenticationMiddleware", # Аутентификация
+    "django.contrib.messages.middleware.MessageMiddleware",    # Сообщения
 ]
 
-# Only use clickjacking protection in deployments because the Development Web View uses
-# iframes and needs to be a cross origin.
+# Для Replit добавляем middleware для работы с iframe
 if "REPLIT_DEPLOYMENT" in os.environ:
     MIDDLEWARE.append("django.middleware.clickjacking.XFrameOptionsMiddleware")
 
-ROOT_URLCONF = "django_project.urls"
+# БЛОК 7: КОРНЕВАЯ КОНФИГУРАЦИЯ URL
+ROOT_URLCONF = "django_project.urls"    # Главный файл маршрутизации
 
+# БЛОК 8: НАСТРОЙКИ ШАБЛОНОВ
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
+        "BACKEND": "django.template.backends.django.DjangoTemplates",  # Django-шаблоны
+        "DIRS": [],                            # Дополнительные папки шаблонов
+        "APP_DIRS": True,                      # Искать шаблоны в папках приложений
         "OPTIONS": {
-            "context_processors": [
+            "context_processors": [            # Процессоры контекста (переменные для шаблонов)
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
@@ -75,53 +82,33 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "django_project.wsgi.application"
+# БЛОК 9: WSGI-ПРИЛОЖЕНИЕ
+WSGI_APPLICATION = "django_project.wsgi.application"   # Точка входа для WSGI-серверов
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
+# БЛОК 10: НАСТРОЙКИ БАЗЫ ДАННЫХ
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.sqlite3",        # Используем SQLite
+        "NAME": BASE_DIR / "db.sqlite3",               # Файл базы данных
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
+# БЛОК 11: ВАЛИДАЦИЯ ПАРОЛЕЙ (ДЛЯ АДМИНКИ)
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+# БЛОК 12: ЛОКАЛИЗАЦИЯ
+LANGUAGE_CODE = "en-us"          # Язык интерфейса
+TIME_ZONE = "UTC"                # Часовой пояс
+USE_I18N = True                  # Включить интернационализацию
+USE_TZ = True                    # Включить поддержку часовых поясов
 
-LANGUAGE_CODE = "en-us"
+# БЛОК 13: СТАТИЧЕСКИЕ ФАЙЛЫ (CSS, JS, изображения)
+STATIC_URL = "static/"           # URL-префикс для статических файлов
 
-TIME_ZONE = "UTC"
-
-USE_I18N = True
-
-USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
-STATIC_URL = "static/"
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# БЛОК 14: ПОЛЕ ID ПО УМОЛЧАНИЮ
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"   # Тип автоматического ID

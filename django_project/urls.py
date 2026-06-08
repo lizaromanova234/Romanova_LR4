@@ -14,13 +14,24 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# БЛОК 1: ИМПОРТ БИБЛИОТЕК
+from django.contrib import admin          # Административная панель Django
+from django.urls import path, include     # Маршрутизация: path и include для подключения приложений
+from tasks import views                   # Представления приложения tasks (шаблон)
 
-from django.contrib import admin
-from django.urls import path, include
-from tasks import views
-
+# БЛОК 2: МАРШРУТИЗАЦИЯ (СПИСОК URL-ПАТТЕРНОВ)
 urlpatterns = [
+    # Маршрут для административной панели
+    # При переходе на /admin/ открывается панель управления Django
     path("admin/", admin.site.urls),
+
+    # Маршрут для корневой страницы (путь "/")
+    # При переходе на главную страницу вызывается функция views.index из приложения tasks
+    # Это заглушка / шаблон, созданный при инициализации проекта
     path("", views.index),
+
+    # Маршрут для приложения botchecker
+    # Все URL, начинающиеся с /botchecker/, передаются в файл urls.py приложения botchecker
+    # include() подключает маршруты из botchecker/urls.py
     path("botchecker/", include("botchecker.urls")),
 ]
